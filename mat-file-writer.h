@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <fstream>
+#include <vector>
 
 /**
  * MatFileWriter creates MAT-file (Level 5) with matrices/vectors (only 2d)
@@ -47,7 +48,7 @@ public:
      * @return
      */
     template<typename T>
-    MatFileWriter& matrix(const char* name, const T* first,
+    MatFileWriter& matrix(const std::string& name, const T* first,
                           size_t rows, size_t cols = 1,
                           MatrixOrder order = MatrixOrder::ROW_MAJOR)
     {
@@ -90,7 +91,7 @@ public:
     }
 
     template<typename T>
-    MatFileWriter& matrixCM(const char* name, const T* first,
+    MatFileWriter& matrixCM(const std::string& name, const T* first,
                             size_t rows, size_t cols = 1)
     {
         return matrix(name, first, rows, cols, MatrixOrder::COLUMN_MAJOR);
@@ -114,7 +115,7 @@ private:
 
     std::ofstream outFile;
 
-    MatFileWriter& matrix(const char *name, const void* first,
+    MatFileWriter& matrix(const std::string& name, const void* first,
                           mxCLASS dataClass, int rows, int cols,
                           MatrixOrder order);
 
@@ -122,7 +123,7 @@ private:
 
     void write_data_element(int type, const void *data, int dataItemSize, int nDataItems, bool charClass);
 
-    static uint8_t* transpose(const void* data, int dataItemSize, int rows, int cols);
+    static std::vector<uint8_t> transpose(const void* data, int dataItemSize, int rows, int cols);
     static inline uint32_t get_padding(uint32_t size);
 };
 
@@ -158,7 +159,7 @@ MatFileWriter::~MatFileWriter()
     close();
 }
 
-MatFileWriter& MatFileWriter::matrix(const char *name, const void* first,
+MatFileWriter& MatFileWriter::matrix(const std::string& name, const void* first,
                                      mxCLASS dataClass, int rows, int cols,
                                      MatrixOrder order)
 {
@@ -229,16 +230,18 @@ MatFileWriter& MatFileWriter::matrix(const char *name, const void* first,
     }
 
     const void* data=first;
-    uint8_t* transposed=nullptr;
+    std::vector<uint8_t> transposed;
 
     // since matlab expects matrices in column major order,
     // we need to transpose it first
     if (order == MatrixOrder::ROW_MAJOR)
+    {
         transposed=transpose(first, dataItemSize, rows, cols);
-    if(transposed)
-        data=transposed;
+        if(!transposed.empty())
+            data = transposed.data();
+    }
 
-    auto name_size = (uint32_t) strlen(name) * sizeof(char);
+    auto name_size = name.size();
 
     //add padding bytes
     name_size += get_padding((uint32_t)name_size);
@@ -280,12 +283,8 @@ MatFileWriter& MatFileWriter::matrix(const char *name, const void* first,
     write_data_element(miINT32, dims, sizeof(int32_t), 2, false);
 
     //write array name and data
-    write_data_element(miINT8, (void *) name, sizeof(char), static_cast<uint32_t>(strlen(name)), false);
+    write_data_element(miINT8, name.c_str(), sizeof(char), name.size(), false);
     write_data_element(dataItemType, data, dataItemSize, dataCount, dataClass==mxCHAR_CLASS);
-
-    //delete transposed data
-    if (transposed)
-        delete[](transposed);
 
     return *this;
 }
@@ -366,13 +365,14 @@ void MatFileWriter::close()
         outFile.close();
 }
 
-uint8_t* MatFileWriter::transpose(const void *data, int dataItemSize, int rows, int cols)
+std::vector<uint8_t> MatFileWriter::transpose(const void *data, int dataItemSize, int rows, int cols)
 {
+    std::vector<uint8_t> tr;
     //transposed result will be the same
     if(rows==1 || cols==1)
-        return nullptr;
+        return tr;
 
-    auto* tr = new uint8_t[rows*cols*dataItemSize];
+    tr.resize(rows*cols*dataItemSize);
     auto* src = (uint8_t*) data;
 
     for(int i=0;i<cols;++i)
