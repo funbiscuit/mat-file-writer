@@ -298,7 +298,7 @@ void MatFileWriter::writeHeader()
 
     const size_t maxTextLen = 124;	//matlab uses 124 bytes for header text and 4 bytes for version+endian
 
-    const char head[] = "Version 5 MAT-file, created by MatFileWriter";
+    const char head[] = "MATLAB 5.0 MAT-file";
     size_t textLen = strlen(head);
 
     //write text in header (124 bytes max)
@@ -344,7 +344,7 @@ void MatFileWriter::writeDataElement(int type, const void* data, int dataItemSiz
 
         for (int i = 0; i<nDataItems; ++i)
         {
-            outFile << *chars << 0x00;
+            outFile << *chars << (uint8_t) 0x00;
             ++chars;
         }
     }
@@ -361,7 +361,7 @@ void MatFileWriter::write(const void* bytes, size_t num)
         outFile.write((const char*) bytes, num);
     else
         for(size_t i = 0; i < num; ++i)
-            outFile << 0x00;
+            outFile << (uint8_t) 0x00;
 }
 
 void MatFileWriter::close()
