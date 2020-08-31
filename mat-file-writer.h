@@ -121,10 +121,14 @@ private:
 
     void writeHeader();
 
-    void write_data_element(int type, const void *data, int dataItemSize, int nDataItems, bool charClass);
+    void writeDataElement(int type, const void *data, int dataItemSize,
+                          int nDataItems, bool charClass);
 
-    static std::vector<uint8_t> transpose(const void* data, int dataItemSize, int rows, int cols);
-    static inline uint32_t get_padding(uint32_t size);
+    void write(const void* bytes, size_t num);
+
+    static std::vector<uint8_t> transpose(const void* data, int dataItemSize,
+                                          int rows, int cols);
+    static inline uint32_t getPadding(uint32_t size);
 };
 
 
@@ -167,8 +171,8 @@ MatFileWriter& MatFileWriter::matrix(const std::string& name, const void* first,
         return *this;
 
     //write data element
-    uint32_t data_type = miMATRIX;
-    uint32_t bytes_num = 0;
+    uint32_t dataType = miMATRIX;
+    uint32_t bytesNum = 0;
 
     int32_t dims[2]={rows, cols}; //1xn - row; nx1 - column
 
@@ -241,10 +245,10 @@ MatFileWriter& MatFileWriter::matrix(const std::string& name, const void* first,
             data = transposed.data();
     }
 
-    auto name_size = name.size();
+    auto nameSize = name.size();
 
     //add padding bytes
-    name_size += get_padding((uint32_t)name_size);
+    nameSize += getPadding((uint32_t) nameSize);
 
     auto dataCount = static_cast<uint32_t>(rows * cols);
     uint32_t dataTotalSize = dataCount * dataItemSize;
@@ -252,39 +256,38 @@ MatFileWriter& MatFileWriter::matrix(const std::string& name, const void* first,
     if(dataClass==mxCHAR_CLASS)
         dataTotalSize <<= 1u;
 
-    dataTotalSize += get_padding(dataTotalSize);
+    dataTotalSize += getPadding(dataTotalSize);
 
-    bytes_num = 16 //array flags subelement
+    bytesNum = 16 //array flags subelement
                 + 16 //dimensions subelement
-                + name_size + 8 //name subelement (8 for tag)
+                + nameSize + 8 //name subelement (8 for tag)
                 + dataTotalSize + 8; //data subelement (8 for tag)
 
 
-    outFile.write((const char*) &data_type, sizeof(uint32_t));
-    outFile.write((const char*) &bytes_num, sizeof(uint32_t));
+    write(&dataType, 4);
+    write(&bytesNum, 4);
 
 
     //write subelements
 
     //write array flags block (8 bytes)
-    data_type = miUINT32;
-    bytes_num = 8;
-    outFile.write((const char*) &data_type, sizeof(uint32_t));
-    outFile.write((const char*) &bytes_num, sizeof(uint32_t));
+    dataType = miUINT32;
+    bytesNum = 8;
+    write(&dataType, 4);
+    write(&bytesNum, 4);
 
     uint32_t flags = 0x00;
     flags |= dataClass;//we use only data class flag
-    outFile.write((const char*) &flags, sizeof(uint32_t));
+    write(&flags, 4);
     //write 4 bytes of undefined (0 in this case) data to array flags block
-    for(int i=0;i<4;++i)
-        outFile << 0x00;
+    write(nullptr, 4);
 
     //write dimensions
-    write_data_element(miINT32, dims, sizeof(int32_t), 2, false);
+    writeDataElement(miINT32, dims, sizeof(int32_t), 2, false);
 
     //write array name and data
-    write_data_element(miINT8, name.c_str(), sizeof(char), name.size(), false);
-    write_data_element(dataItemType, data, dataItemSize, dataCount, dataClass==mxCHAR_CLASS);
+    writeDataElement(miINT8, name.c_str(), sizeof(char), name.size(), false);
+    writeDataElement(dataItemType, data, dataItemSize, dataCount, dataClass == mxCHAR_CLASS);
 
     return *this;
 }
@@ -296,11 +299,11 @@ void MatFileWriter::writeHeader()
     const size_t maxTextLen = 124;	//matlab uses 124 bytes for header text and 4 bytes for version+endian
 
     const char head[] = "Version 5 MAT-file, created by MatFileWriter";
-    size_t text_len = strlen(head);
+    size_t textLen = strlen(head);
 
     //write text in header (124 bytes max)
-    outFile.write(head, sizeof(char) * std::min(maxTextLen, text_len));
-    for (size_t k = text_len; k<maxTextLen; k++)
+    write(head, std::min(maxTextLen, textLen));
+    for (size_t k = textLen; k < maxTextLen; k++)
         outFile << ' ';
 
     uint16_t version = 0x0100;
@@ -309,11 +312,11 @@ void MatFileWriter::writeHeader()
     endian += 'I';
 
     //(version+endian 4 bytes)
-    outFile.write((const char*) &version, sizeof(uint16_t));
-    outFile.write((const char*) &endian, sizeof(uint16_t));
+    write(&version, 2);
+    write(&endian, 2);
 }
 
-void MatFileWriter::write_data_element(int type, const void* data, int dataItemSize, int nDataItems, bool charClass)
+void MatFileWriter::writeDataElement(int type, const void* data, int dataItemSize, int nDataItems, bool charClass)
 {
     //write data element tag (8 bytes)
 
@@ -327,9 +330,9 @@ void MatFileWriter::write_data_element(int type, const void* data, int dataItemS
     }
 
     //write the datatype identifier
-    outFile.write((const char*) &type, sizeof(uint32_t));
+    write(&type, 4);
     //write the number of data bytes to the data element's tag:
-    outFile.write((const char*) &N, sizeof(uint32_t));
+    write(&N, 4);
 
     //write data element body (N bytes)
     // write data
@@ -346,18 +349,20 @@ void MatFileWriter::write_data_element(int type, const void* data, int dataItemS
         }
     }
     else
-        outFile.write((const char*) data, dataItemSize * nDataItems);
+        write(data, dataItemSize * nDataItems);
 
-    /*
-    * padding is required to ensure 64bit boundaries between
-    * data elements.
-    */
-    uint32_t paddingBytes = get_padding(N);
-
-    for (uint32_t i = 0; i<paddingBytes; ++i)
-        outFile << 0x00;
+    // padding is required to ensure 64bit boundaries between data elements
+    write(nullptr, getPadding(N));
 }
 
+void MatFileWriter::write(const void* bytes, size_t num)
+{
+    if(bytes)
+        outFile.write((const char*) bytes, num);
+    else
+        for(size_t i = 0; i < num; ++i)
+            outFile << 0x00;
+}
 
 void MatFileWriter::close()
 {
@@ -382,11 +387,11 @@ std::vector<uint8_t> MatFileWriter::transpose(const void *data, int dataItemSize
     return tr;
 }
 
-uint32_t MatFileWriter::get_padding(uint32_t size)
+uint32_t MatFileWriter::getPadding(uint32_t size)
 {
     //short way to write (8 - (size % 8)) % 8;
     return uint32_t(-size%8);
 }
 
 #endif // MAT_FILE_WRITER_IMPLEMENTATION
-#endif //LIB_MAT_FILE_WRITER_H
+#endif // LIB_MAT_FILE_WRITER_H
