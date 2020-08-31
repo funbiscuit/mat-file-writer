@@ -70,19 +70,19 @@ int main()
             .matrix("literal", "Literal can also be written!", 4, 7)
             .matrix("literal2", "Literal can also be written!", 7, 4)
                     //write column major matrices
-            .matrix("chars_cm", chars_cm, 4, 2, false)
-            .matrix("vals8i_cm", vals8i_cm, 4, 2, false)
-            .matrix("vals8ui_cm", vals8ui_cm, 4, 2, false)
-            .matrix("vals16i_cm", vals16i_cm, 4, 2, false)
-            .matrix("vals16ui_cm", vals16ui_cm, 4, 2, false)
-            .matrix("vals32i_cm", vals32i_cm, 4, 2, false)
-            .matrix("vals32ui_cm", vals32ui_cm, 4, 2, false)
-            .matrix("vals64i_cm", vals64i_cm, 4, 2, false)
-            .matrix("vals64ui_cm", vals64ui_cm, 4, 2, false)
-            .matrix("valsf_cm", valsf_cm, 4, 2, false)
-            .matrix("valsd_cm", valsd_cm, 4, 2, false)
-            .matrix("literal_cm", "Literal can also be written!", 4, 7, false)
-            .matrix("literal2_cm", "Literal can also be written!", 7, 4, false);
+            .matrixCM("chars_cm", chars_cm, 4, 2)
+            .matrixCM("vals8i_cm", vals8i_cm, 4, 2)
+            .matrixCM("vals8ui_cm", vals8ui_cm, 4, 2)
+            .matrixCM("vals16i_cm", vals16i_cm, 4, 2)
+            .matrixCM("vals16ui_cm", vals16ui_cm, 4, 2)
+            .matrixCM("vals32i_cm", vals32i_cm, 4, 2)
+            .matrixCM("vals32ui_cm", vals32ui_cm, 4, 2)
+            .matrixCM("vals64i_cm", vals64i_cm, 4, 2)
+            .matrixCM("vals64ui_cm", vals64ui_cm, 4, 2)
+            .matrixCM("valsf_cm", valsf_cm, 4, 2)
+            .matrixCM("valsd_cm", valsd_cm, 4, 2)
+            .matrixCM("literal_cm", "Literal can also be written!", 4, 7)
+            .matrixCM("literal2_cm", "Literal can also be written!", 7, 4);
 
     // close is optional, file will be closed on destruction of object
     // writer.close();

@@ -13,6 +13,11 @@
 class MatFileWriter
 {
 public:
+    enum class MatrixOrder
+    {
+        ROW_MAJOR,
+        COLUMN_MAJOR,
+    };
 
     explicit MatFileWriter(const std::string& path);
     ~MatFileWriter();
@@ -23,8 +28,28 @@ public:
      */
     void close();
 
+
+    /**
+     * Write 2D matrix to opened MAT-file
+     * Suppose we have matrix:
+     * 0 1 2
+     * 3 4 5
+     * In row major format it will be stored as:
+     * 0 1 2 3 4 5
+     * In column major format it will be stored as:
+     * 0 3 1 4 2 5
+     * @tparam T - type of element
+     * @param name - name of matrix in file
+     * @param first - pointer to first element in matrix
+     * @param rows - number of rows
+     * @param cols - number of columns
+     * @param order - order of elements
+     * @return
+     */
     template<typename T>
-    MatFileWriter& matrix(const char* name, const T* first, size_t rows, size_t cols = 1, bool rowMajor = true)
+    MatFileWriter& matrix(const char* name, const T* first,
+                          size_t rows, size_t cols = 1,
+                          MatrixOrder order = MatrixOrder::ROW_MAJOR)
     {
         // check that type of elements is supported
         static_assert(std::is_same<T, char>::value ||
@@ -41,27 +66,34 @@ public:
                       "Supported types are char, integers and float/double");
 
         if(std::is_same<T, char>::value)
-            return matrix(name, first, mxCHAR_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxCHAR_CLASS, rows, cols, order);
         else if(std::is_same<T, float>::value)
-            return matrix(name, first, mxSINGLE_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxSINGLE_CLASS, rows, cols, order);
         else if(std::is_same<T, double>::value)
-            return matrix(name, first, mxDOUBLE_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxDOUBLE_CLASS, rows, cols, order);
         else if(std::is_same<T, int8_t>::value)
-            return matrix(name, first, mxINT8_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxINT8_CLASS, rows, cols, order);
         else if(std::is_same<T, uint8_t>::value)
-            return matrix(name, first, mxUINT8_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxUINT8_CLASS, rows, cols, order);
         else if(std::is_same<T, int16_t>::value)
-            return matrix(name, first, mxINT16_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxINT16_CLASS, rows, cols, order);
         else if(std::is_same<T, uint16_t>::value)
-            return matrix(name, first, mxUINT16_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxUINT16_CLASS, rows, cols, order);
         else if(std::is_same<T, int32_t>::value)
-            return matrix(name, first, mxINT32_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxINT32_CLASS, rows, cols, order);
         else if(std::is_same<T, uint32_t>::value)
-            return matrix(name, first, mxUINT32_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxUINT32_CLASS, rows, cols, order);
         else if(std::is_same<T, int64_t>::value)
-            return matrix(name, first, mxINT64_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxINT64_CLASS, rows, cols, order);
         else if(std::is_same<T, uint64_t>::value)
-            return matrix(name, first, mxUINT64_CLASS, rows, cols, rowMajor);
+            return matrix(name, first, mxUINT64_CLASS, rows, cols, order);
+    }
+
+    template<typename T>
+    MatFileWriter& matrixCM(const char* name, const T* first,
+                            size_t rows, size_t cols = 1)
+    {
+        return matrix(name, first, rows, cols, MatrixOrder::COLUMN_MAJOR);
     }
 
 private:
@@ -82,7 +114,9 @@ private:
 
     std::ofstream outFile;
 
-    MatFileWriter& matrix(const char *name, const void* first, mxCLASS dataClass, int rows, int cols, bool bRowMajor);
+    MatFileWriter& matrix(const char *name, const void* first,
+                          mxCLASS dataClass, int rows, int cols,
+                          MatrixOrder order);
 
     void writeHeader();
 
@@ -124,7 +158,9 @@ MatFileWriter::~MatFileWriter()
     close();
 }
 
-MatFileWriter& MatFileWriter::matrix(const char *name, const void* first, mxCLASS dataClass, int rows, int cols, bool bRowMajor)
+MatFileWriter& MatFileWriter::matrix(const char *name, const void* first,
+                                     mxCLASS dataClass, int rows, int cols,
+                                     MatrixOrder order)
 {
     if(!outFile.is_open())
         return *this;
@@ -137,63 +173,51 @@ MatFileWriter& MatFileWriter::matrix(const char *name, const void* first, mxCLAS
 
     int dataItemSize=sizeof(uint8_t);
     int dataItemType=miUINT8;
-//    uint32_t dataItemClass=dataClass;
 
     switch (dataClass)
     {
         case mxSINGLE_CLASS:
             dataItemSize=sizeof(float);
             dataItemType=miSINGLE;
-//            dataItemClass=mxSINGLE_CLASS;
             break;
         case mxDOUBLE_CLASS:
             dataItemSize=sizeof(double);
             dataItemType=miDOUBLE;
-//            dataItemClass=mxDOUBLE_CLASS;
             break;
-
         case mxINT8_CLASS:
             dataItemSize=sizeof(int8_t);
             dataItemType=miINT8;
-//            dataItemClass=mxINT8_CLASS;
             break;
         case mxUINT8_CLASS:
             dataItemSize=sizeof(uint8_t);
             dataItemType=miUINT8;
-//            dataItemClass=mxUINT8_CLASS;
             break;
 
         case mxINT16_CLASS:
             dataItemSize=sizeof(int16_t);
             dataItemType=miINT16;
-//            dataItemClass=mxINT16_CLASS;
             break;
         case mxUINT16_CLASS:
             dataItemSize=sizeof(uint16_t);
             dataItemType=miUINT16;
-//            dataItemClass=mxUINT16_CLASS;
             break;
 
         case mxINT32_CLASS:
             dataItemSize=sizeof(int32_t);
             dataItemType=miINT32;
-//            dataItemClass=mxINT32_CLASS;
             break;
         case mxUINT32_CLASS:
             dataItemSize=sizeof(uint32_t);
             dataItemType=miUINT32;
-//            dataItemClass=mxUINT32_CLASS;
             break;
 
         case mxINT64_CLASS:
             dataItemSize=sizeof(int64_t);
             dataItemType=miINT64;
-//            dataItemClass=mxINT64_CLASS;
             break;
         case mxUINT64_CLASS:
             dataItemSize=sizeof(uint64_t);
             dataItemType=miUINT64;
-//            dataItemClass=mxUINT64_CLASS;
             break;
 
         case mxCHAR_CLASS:
@@ -201,15 +225,15 @@ MatFileWriter& MatFileWriter::matrix(const char *name, const void* first, mxCLAS
             //data type will be set to miUINT16 automatically later
             //because char array is written as array of uint16
             dataItemType=miUINT16;
-//            dataItemClass=mxCHAR_CLASS;
             break;
     }
 
     const void* data=first;
     uint8_t* transposed=nullptr;
 
-    //since matlab expects matrices in column major order, we need to transpose it first
-    if (bRowMajor)
+    // since matlab expects matrices in column major order,
+    // we need to transpose it first
+    if (order == MatrixOrder::ROW_MAJOR)
         transposed=transpose(first, dataItemSize, rows, cols);
     if(transposed)
         data=transposed;
