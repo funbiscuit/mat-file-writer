@@ -13,20 +13,6 @@
 class MatFileWriter
 {
 public:
-    enum NumberType
-    {
-        FLOAT = 1,
-        DOUBLE = 2,
-        INT8 = 3,
-        UINT8 = 4,
-        INT16 = 5,
-        UINT16 = 6,
-        INT32 = 7,
-        UINT32 = 8,
-        INT64 = 9,
-        UINT64 = 10,
-        CHAR =11
-    };
 
     explicit MatFileWriter(const std::string& path);
     ~MatFileWriter();
@@ -55,9 +41,24 @@ public:
     void close();
 
 private:
+    enum mxCLASS : uint32_t
+    {
+        mxCHAR_CLASS = 4,
+        mxDOUBLE_CLASS = 6,
+        mxSINGLE_CLASS = 7,
+        mxINT8_CLASS = 8,
+        mxUINT8_CLASS = 9,
+        mxINT16_CLASS = 10,
+        mxUINT16_CLASS = 11,
+        mxINT32_CLASS = 12,
+        mxUINT32_CLASS = 13,
+        mxINT64_CLASS = 14,
+        mxUINT64_CLASS = 15
+    };
+
     std::ofstream outFile;
 
-    MatFileWriter& matrix(const char *name, const void* first, NumberType dataType, int rows, int cols, bool bRowMajor);
+    MatFileWriter& matrix(const char *name, const void* first, mxCLASS dataClass, int rows, int cols, bool bRowMajor);
 
     void writeHeader();
 
@@ -87,21 +88,6 @@ enum miTYPE
     miMATRIX = 14,
 };
 
-enum mxCLASS
-{
-    mxCHAR_CLASS = 4,
-    mxDOUBLE_CLASS = 6,
-    mxSINGLE_CLASS = 7,
-    mxINT8_CLASS = 8,
-    mxUINT8_CLASS = 9,
-    mxINT16_CLASS = 10,
-    mxUINT16_CLASS = 11,
-    mxINT32_CLASS = 12,
-    mxUINT32_CLASS = 13,
-    mxINT64_CLASS = 14,
-    mxUINT64_CLASS = 15
-};
-
 MatFileWriter::MatFileWriter(const std::string &path)
 {
     outFile.open(path, std::ios::binary | std::ios::out);
@@ -116,60 +102,60 @@ MatFileWriter::~MatFileWriter()
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const float *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, FLOAT, rows, cols, bRowMajor);
+    return matrix(name, first, mxSINGLE_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const double *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, DOUBLE, rows, cols, bRowMajor);
+    return matrix(name, first, mxDOUBLE_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const int8_t *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, INT8, rows, cols, bRowMajor);
+    return matrix(name, first, mxINT8_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const uint8_t *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, UINT8, rows, cols, bRowMajor);
+    return matrix(name, first, mxUINT8_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const int16_t *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, INT16, rows, cols, bRowMajor);
+    return matrix(name, first, mxINT16_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const uint16_t *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, UINT16, rows, cols, bRowMajor);
+    return matrix(name, first, mxUINT16_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const int32_t *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, INT32, rows, cols, bRowMajor);
+    return matrix(name, first, mxINT32_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const uint32_t *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, UINT32, rows, cols, bRowMajor);
+    return matrix(name, first, mxUINT32_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const int64_t *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, INT64, rows, cols, bRowMajor);
+    return matrix(name, first, mxINT64_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const uint64_t *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, UINT64, rows, cols, bRowMajor);
+    return matrix(name, first, mxUINT64_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const char *first, int rows, int cols, bool bRowMajor)
 {
-    return matrix(name, first, CHAR, rows, cols, bRowMajor);
+    return matrix(name, first, mxCHAR_CLASS, rows, cols, bRowMajor);
 }
 
-MatFileWriter& MatFileWriter::matrix(const char *name, const void* first, NumberType dataType, int rows, int cols, bool bRowMajor)
+MatFileWriter& MatFileWriter::matrix(const char *name, const void* first, mxCLASS dataClass, int rows, int cols, bool bRowMajor)
 {
     if(!outFile.is_open())
         return *this;
@@ -182,71 +168,71 @@ MatFileWriter& MatFileWriter::matrix(const char *name, const void* first, Number
 
     int dataItemSize=sizeof(uint8_t);
     int dataItemType=miUINT8;
-    uint32_t dataItemClass=mxUINT8_CLASS;
+//    uint32_t dataItemClass=dataClass;
 
-    switch (dataType)
+    switch (dataClass)
     {
-        case FLOAT:
+        case mxSINGLE_CLASS:
             dataItemSize=sizeof(float);
             dataItemType=miSINGLE;
-            dataItemClass=mxSINGLE_CLASS;
+//            dataItemClass=mxSINGLE_CLASS;
             break;
-        case DOUBLE:
+        case mxDOUBLE_CLASS:
             dataItemSize=sizeof(double);
             dataItemType=miDOUBLE;
-            dataItemClass=mxDOUBLE_CLASS;
+//            dataItemClass=mxDOUBLE_CLASS;
             break;
 
-        case INT8:
+        case mxINT8_CLASS:
             dataItemSize=sizeof(int8_t);
             dataItemType=miINT8;
-            dataItemClass=mxINT8_CLASS;
+//            dataItemClass=mxINT8_CLASS;
             break;
-        case UINT8:
+        case mxUINT8_CLASS:
             dataItemSize=sizeof(uint8_t);
             dataItemType=miUINT8;
-            dataItemClass=mxUINT8_CLASS;
+//            dataItemClass=mxUINT8_CLASS;
             break;
 
-        case INT16:
+        case mxINT16_CLASS:
             dataItemSize=sizeof(int16_t);
             dataItemType=miINT16;
-            dataItemClass=mxINT16_CLASS;
+//            dataItemClass=mxINT16_CLASS;
             break;
-        case UINT16:
+        case mxUINT16_CLASS:
             dataItemSize=sizeof(uint16_t);
             dataItemType=miUINT16;
-            dataItemClass=mxUINT16_CLASS;
+//            dataItemClass=mxUINT16_CLASS;
             break;
 
-        case INT32:
+        case mxINT32_CLASS:
             dataItemSize=sizeof(int32_t);
             dataItemType=miINT32;
-            dataItemClass=mxINT32_CLASS;
+//            dataItemClass=mxINT32_CLASS;
             break;
-        case UINT32:
+        case mxUINT32_CLASS:
             dataItemSize=sizeof(uint32_t);
             dataItemType=miUINT32;
-            dataItemClass=mxUINT32_CLASS;
+//            dataItemClass=mxUINT32_CLASS;
             break;
 
-        case INT64:
+        case mxINT64_CLASS:
             dataItemSize=sizeof(int64_t);
             dataItemType=miINT64;
-            dataItemClass=mxINT64_CLASS;
+//            dataItemClass=mxINT64_CLASS;
             break;
-        case UINT64:
+        case mxUINT64_CLASS:
             dataItemSize=sizeof(uint64_t);
             dataItemType=miUINT64;
-            dataItemClass=mxUINT64_CLASS;
+//            dataItemClass=mxUINT64_CLASS;
             break;
 
-        case CHAR:
+        case mxCHAR_CLASS:
             dataItemSize=sizeof(int8_t);
             //data type will be set to miUINT16 automatically later
             //because char array is written as array of uint16
             dataItemType=miUINT16;
-            dataItemClass=mxCHAR_CLASS;
+//            dataItemClass=mxCHAR_CLASS;
             break;
     }
 
@@ -267,7 +253,7 @@ MatFileWriter& MatFileWriter::matrix(const char *name, const void* first, Number
     auto dataCount = static_cast<uint32_t>(rows * cols);
     uint32_t dataTotalSize = dataCount * dataItemSize;
     //chars will be written as uint16, so size is twice as big
-    if(dataType==CHAR)
+    if(dataClass==mxCHAR_CLASS)
         dataTotalSize <<= 1u;
 
     dataTotalSize += get_padding(dataTotalSize);
@@ -291,7 +277,7 @@ MatFileWriter& MatFileWriter::matrix(const char *name, const void* first, Number
     outFile.write((const char*) &bytes_num, sizeof(uint32_t));
 
     uint32_t flags = 0x00;
-    flags |= dataItemClass;//we use only data class flag
+    flags |= dataClass;//we use only data class flag
     outFile.write((const char*) &flags, sizeof(uint32_t));
     //write 4 bytes of undefined (0 in this case) data to array flags block
     for(int i=0;i<4;++i)
@@ -302,7 +288,7 @@ MatFileWriter& MatFileWriter::matrix(const char *name, const void* first, Number
 
     //write array name and data
     write_data_element(miINT8, (void *) name, sizeof(char), static_cast<uint32_t>(strlen(name)), false);
-    write_data_element(dataItemType, data, dataItemSize, dataCount, dataType==CHAR);
+    write_data_element(dataItemType, data, dataItemSize, dataCount, dataClass==mxCHAR_CLASS);
 
     //delete transposed data
     if (transposed)
