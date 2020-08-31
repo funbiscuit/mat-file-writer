@@ -5,7 +5,7 @@
 #include <fstream>
 
 /**
- * MatFileWriter creates MAT-file (version 5) with matrices/vectors (only 2d)
+ * MatFileWriter creates MAT-file (Level 5) with matrices/vectors (only 2d)
  * of all supported numeric types
  * Documentation for file format:
  * https://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf
@@ -17,28 +17,52 @@ public:
     explicit MatFileWriter(const std::string& path);
     ~MatFileWriter();
 
-    MatFileWriter& matrix(const char *name, const float *first, int rows, int cols = 1, bool bRowMajor = true);
-    MatFileWriter& matrix(const char *name, const double *first, int rows, int cols = 1, bool bRowMajor = true);
-
-    MatFileWriter& matrix(const char *name, const int8_t *first, int rows, int cols = 1, bool bRowMajor = true);
-    MatFileWriter& matrix(const char *name, const uint8_t *first, int rows, int cols = 1, bool bRowMajor = true);
-
-    MatFileWriter& matrix(const char *name, const int16_t *first, int rows, int cols = 1, bool bRowMajor = true);
-    MatFileWriter& matrix(const char *name, const uint16_t *first, int rows, int cols = 1, bool bRowMajor = true);
-
-    MatFileWriter& matrix(const char *name, const int32_t *first, int rows, int cols = 1, bool bRowMajor = true);
-    MatFileWriter& matrix(const char *name, const uint32_t *first, int rows, int cols = 1, bool bRowMajor = true);
-
-    MatFileWriter& matrix(const char *name, const int64_t *first, int rows, int cols = 1, bool bRowMajor = true);
-    MatFileWriter& matrix(const char *name, const uint64_t *first, int rows, int cols = 1, bool bRowMajor = true);
-
-    MatFileWriter& matrix(const char *name, const char *first, int rows, int cols = 1, bool bRowMajor = true);
-
     /**
      * Closes file if it was opened (it's safe to call this multiple times)
      * File will be closed automatically on object destruction
      */
     void close();
+
+    template<typename T>
+    MatFileWriter& matrix(const char* name, const T* first, size_t rows, size_t cols = 1, bool rowMajor = true)
+    {
+        // check that type of elements is supported
+        static_assert(std::is_same<T, char>::value ||
+                      std::is_same<T, double>::value ||
+                      std::is_same<T, float>::value ||
+                      std::is_same<T, int8_t>::value ||
+                      std::is_same<T, uint8_t>::value ||
+                      std::is_same<T, int16_t>::value ||
+                      std::is_same<T, uint16_t>::value ||
+                      std::is_same<T, int32_t>::value ||
+                      std::is_same<T, uint32_t>::value ||
+                      std::is_same<T, int64_t>::value ||
+                      std::is_same<T, uint64_t>::value,
+                      "Supported types are char, integers and float/double");
+
+        if(std::is_same<T, char>::value)
+            return matrix(name, first, mxCHAR_CLASS, rows, cols, rowMajor);
+        else if(std::is_same<T, float>::value)
+            return matrix(name, first, mxSINGLE_CLASS, rows, cols, rowMajor);
+        else if(std::is_same<T, double>::value)
+            return matrix(name, first, mxDOUBLE_CLASS, rows, cols, rowMajor);
+        else if(std::is_same<T, int8_t>::value)
+            return matrix(name, first, mxINT8_CLASS, rows, cols, rowMajor);
+        else if(std::is_same<T, uint8_t>::value)
+            return matrix(name, first, mxUINT8_CLASS, rows, cols, rowMajor);
+        else if(std::is_same<T, int16_t>::value)
+            return matrix(name, first, mxINT16_CLASS, rows, cols, rowMajor);
+        else if(std::is_same<T, uint16_t>::value)
+            return matrix(name, first, mxUINT16_CLASS, rows, cols, rowMajor);
+        else if(std::is_same<T, int32_t>::value)
+            return matrix(name, first, mxINT32_CLASS, rows, cols, rowMajor);
+        else if(std::is_same<T, uint32_t>::value)
+            return matrix(name, first, mxUINT32_CLASS, rows, cols, rowMajor);
+        else if(std::is_same<T, int64_t>::value)
+            return matrix(name, first, mxINT64_CLASS, rows, cols, rowMajor);
+        else if(std::is_same<T, uint64_t>::value)
+            return matrix(name, first, mxUINT64_CLASS, rows, cols, rowMajor);
+    }
 
 private:
     enum mxCLASS : uint32_t
@@ -98,61 +122,6 @@ MatFileWriter::MatFileWriter(const std::string &path)
 MatFileWriter::~MatFileWriter()
 {
     close();
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const float *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxSINGLE_CLASS, rows, cols, bRowMajor);
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const double *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxDOUBLE_CLASS, rows, cols, bRowMajor);
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const int8_t *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxINT8_CLASS, rows, cols, bRowMajor);
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const uint8_t *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxUINT8_CLASS, rows, cols, bRowMajor);
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const int16_t *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxINT16_CLASS, rows, cols, bRowMajor);
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const uint16_t *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxUINT16_CLASS, rows, cols, bRowMajor);
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const int32_t *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxINT32_CLASS, rows, cols, bRowMajor);
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const uint32_t *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxUINT32_CLASS, rows, cols, bRowMajor);
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const int64_t *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxINT64_CLASS, rows, cols, bRowMajor);
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const uint64_t *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxUINT64_CLASS, rows, cols, bRowMajor);
-}
-
-MatFileWriter& MatFileWriter::matrix(const char *name, const char *first, int rows, int cols, bool bRowMajor)
-{
-    return matrix(name, first, mxCHAR_CLASS, rows, cols, bRowMajor);
 }
 
 MatFileWriter& MatFileWriter::matrix(const char *name, const void* first, mxCLASS dataClass, int rows, int cols, bool bRowMajor)

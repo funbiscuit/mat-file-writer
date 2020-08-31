@@ -1,7 +1,7 @@
 MatFileWriter
 -------------
 
-Simple single-header library to create MAT-files (version 5).
+Simple single-header library to create MAT-files (Level 5).
 
 Supported data formats
 ----------------------
